@@ -12,6 +12,72 @@ package bouncing_balls;
  */
 class Model {
 
+
+	double[] collision_vector(Ball b1, Ball b2){
+		double collision_vs[] = new double[2];
+		double vx = (balls[0].x - balls[1].x);
+		double vy = (balls[0].y) - (balls[1].y);
+		collision_vs[0] = vx;
+		collision_vs[1] = vy;
+		return collision_vs;
+	}
+	
+	double[] give_components(Ball b, double[] coords){
+		/* x (coord 0, coord 1)
+		 * y (coord 1, -coord 0)
+		 * x' [-coord0 -coord1] [x1]
+		 * y' [-coord1 coord0] [y1]
+		 */
+
+		double[] vs = new double[2];
+		double vx = (b.vx * coords[0] + b.vy*coords[1]);
+		double vy = (b.vx *(coords[1]) + b.vy*-coords[0]);
+		vs[0] = vx;
+		vs[1] = vy;
+		return vs;
+	}
+
+	void collison(Ball b1, Ball b2){
+		/* u2 - u1 = -(v2 - v1)
+		 * 
+		 */
+		double[] coords = collision_vector(b1, b2);
+		double[] b1_new_v_vector = give_components(b1, coords);
+		double[] b2_new_v_vector = give_components(b2, coords);
+		
+		b1_new_v_vector[0] = -b1_new_v_vector[0];
+
+		b2_new_v_vector[0] = -b2_new_v_vector[0];
+
+		double det = 1/(coords[0]*-coords[0] - (coords[1]*coords[1]));
+
+		b1_new_v_vector[0] = det*(b1_new_v_vector[0]*-coords[0] + b1_new_v_vector[1]*-coords[1]);
+
+		b2_new_v_vector[0] = det*(b2_new_v_vector[0]*-coords[1] + b2_new_v_vector[1]*coords[0]);
+
+		b1_new_v_vector[1] = det*(b1_new_v_vector[0]*-coords[0] + b1_new_v_vector[1]*-coords[1]);
+
+		b2_new_v_vector[1] = det*(b2_new_v_vector[0]*-coords[1] + b2_new_v_vector[1]*coords[0]);
+		
+		b1.vx = b1_new_v_vector[0];
+		b1.vy = b1_new_v_vector[1];
+
+		b2.vx = b2_new_v_vector[0];
+		b2.vy = b2_new_v_vector[1];
+
+		/* [-coord0 -coord1]
+		 * [-coord1 coord0]
+		 */
+
+		/*double det = 1/(coords[0]*-coords[0] - (coords[1]*coords[1]));
+		double vx1 = b1.vx;
+		double vx2 = b2.vx;
+		b1.vx = det*(b1.vx*-coords[0] + b1.vy*-coords[1]);
+		b1.vy = det*(vx1*-coords[1] + b1.vy*coords[0]);
+		b2.vx = det*(b2.vx*-coords[0] + b2.vy*-coords[1]);
+		b2.vy = det*(vx2*-coords[1] + b2.vy*coords[0]);*/
+	}
+
 	double areaWidth, areaHeight;
 	
 	Ball [] balls;
@@ -40,6 +106,10 @@ class Model {
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
+			b.vy -= deltaT * 9.82;
+		}
+		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
+			collison(balls[0], balls[1]);
 		}
 	}
 	
