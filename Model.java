@@ -74,8 +74,7 @@ class Model {
 		double[][] inverse_matrix = find_inverse_matrix(transform_matrix);
 		double[] b1_v = {b1.vx, b1.vy};
 		double[] b2_v = {b2.vx, b2.vy};
-		System.out.println("v1 before: " + Math.abs(b1_v[0]) + Math.abs(b1_v[1]));
-		System.out.println("v2 before: " + Math.abs(b2_v[0]) + Math.abs(b2_v[1]));
+		System.out.println("momentum before: " + b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2))));
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
 		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
@@ -83,12 +82,10 @@ class Model {
 		b1_v_prim[0] = new_velocities[0];
 		b2_v_prim[0] = new_velocities[1];
 
-
 		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
 		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
 
-		System.out.println("v1 after: " + Math.abs(b1_v[0]) + Math.abs(b1_v[1]));
-		System.out.println("v2 after: " + Math.abs(b2_v[0]) + Math.abs(b2_v[1]));
+		System.out.println("momentum after: " + b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2))));
 
 		b1.vx = b1_v[0]; b1.vy = b1_v[1];
 		b2.vx = b2_v[0]; b2.vy = b2_v[1];
