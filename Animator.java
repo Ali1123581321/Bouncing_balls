@@ -90,7 +90,7 @@ public final class Animator extends JPanel implements ActionListener {
         // creating and showing this application's GUI.
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                Animator anim = new Animator(800, 600, 60);
+                Animator anim = new Animator(800, 600, 144);
                 JFrame frame = new JFrame("Bouncing balls");
             	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             	frame.add(anim);
