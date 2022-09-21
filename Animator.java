@@ -68,7 +68,10 @@ public final class Animator extends JPanel implements ActionListener {
 		g2.fillRect(0, 0, this.getWidth(), this.getHeight());
 		// draw balls
 		g2.setColor(Color.RED);
-		for (Ball b : model.balls) {
+		for (int i = 0; i < model.balls.length; i++){
+			if(i == 1)
+				g2.setColor(Color.BLUE);
+			Ball b = model.balls[i];
 			double x = b.x - b.radius;
 			double y = b.y + b.radius;
 			// paint balls (y-coordinates are inverted)

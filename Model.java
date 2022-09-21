@@ -12,72 +12,89 @@ package bouncing_balls;
  */
 class Model {
 
-
-	double[] collision_vector(Ball b1, Ball b2){
-		double collision_vs[] = new double[2];
-		double vx = (balls[0].x - balls[1].x);
-		double vy = (balls[0].y) - (balls[1].y);
-		collision_vs[0] = vx;
-		collision_vs[1] = vy;
-		return collision_vs;
+	double get_angle(Ball b1, Ball b2){
+		double dx = b1.x - b2.x;
+		double dy = b1.y - b2.y;
+		double angle = Math.PI/2;//initilized to pi/2 because if dy is zero, no case will match and we want to return pi/2
+		if(dy == 0){
+			angle = 0;
+		}else if((dx > 0 && dy >= 0) || (dx < 0 && dy < 0)){
+			angle = Math.atan(dy/dx); // In the third and first quadrant
+		}else if(dx < 0 && dy > 0){
+			angle = Math.PI + Math.atan(dy/dx);// In the second quadrant
+		}else if(dx > 0 && dy < 0){
+			angle = Math.PI + Math.atan(dy/dx); //In the fourht quadrant
+		}
+		return angle;
 	}
+
+	double[][] find_transform_matrix(double theta){
+		double[][] transform_matrix = new double[2][2];
+		double cos_theta = Math.cos(theta);
+		double sin_theta = Math.sin(theta);
+		transform_matrix[0][0] = cos_theta; transform_matrix[0][1] = -sin_theta;
+		transform_matrix[1][0] = sin_theta; transform_matrix[1][1] = cos_theta;
+		return transform_matrix;
+	}
+
+	double[][] find_inverse_matrix(double[][] transform_matrix){
+		double[][] inverse_matrix = new double[2][2];
+		double det = 1/((transform_matrix[0][0]*transform_matrix[1][1]) - (transform_matrix[0][1]*transform_matrix[1][0]));
+		inverse_matrix[0][0] = det*transform_matrix[1][1]; inverse_matrix[0][1] = -det*transform_matrix[0][1];
+		inverse_matrix[1][0] = -det*transform_matrix[1][0]; inverse_matrix[1][1] = det*transform_matrix[0][0];
+		return inverse_matrix;
+	}
+
+	double[] transform_to_new_coordinates(double[] v, double[][] inverse_matrix){
+		double[] new_v = new double[2];
+		new_v[0] = v[0]*inverse_matrix[0][0] + v[1]*inverse_matrix[0][1];
+		new_v[1] = v[0]*inverse_matrix[1][0] + v[1]*inverse_matrix[1][1];
+		return new_v;
+	}
+
+	double[] return_to_old_coordinates(double[] v, double[][] transform_matrix){
+		double[] new_v = new double[2];
+		new_v[0] = v[0]*transform_matrix[0][0] + v[1]*transform_matrix[0][1];
+		new_v[1] = v[0]*transform_matrix[1][0] + v[1]*transform_matrix[1][1];
+		return new_v;
+	}
+
+	double[] calculate_velocity(double mass_b1, double mass_b2, double v1, double v2){
+		double total_momentum = mass_b1*v1 + mass_b2*v2;
+		double relative_velocity = v2 - v1;
+		double velocity_after_collision_b1 = (total_momentum + mass_b2*relative_velocity)/(mass_b1 + mass_b2);
+		double velocity_after_collision_b2 = velocity_after_collision_b1 - relative_velocity;
+		double[] v1_v2 = {velocity_after_collision_b1, velocity_after_collision_b2};
+		return v1_v2;
+	}
+
+	void handle_collision(Ball b1, Ball b2){
+		double theta = get_angle(b1, b2);
+		double[][] transform_matrix = find_transform_matrix(theta);
+		double[][] inverse_matrix = find_inverse_matrix(transform_matrix);
+		double[] b1_v = {b1.vx, b1.vy};
+		double[] b2_v = {b2.vx, b2.vy};
+		System.out.println("v1 before: " + Math.abs(b1_v[0]) + Math.abs(b1_v[1]));
+		System.out.println("v2 before: " + Math.abs(b2_v[0]) + Math.abs(b2_v[1]));
+		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
+		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
+		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
+
+		b1_v_prim[0] = new_velocities[0];
+		b2_v_prim[0] = new_velocities[1];
+
+
+		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
+		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
+
+		System.out.println("v1 after: " + Math.abs(b1_v[0]) + Math.abs(b1_v[1]));
+		System.out.println("v2 after: " + Math.abs(b2_v[0]) + Math.abs(b2_v[1]));
+
+		b1.vx = b1_v[0]; b1.vy = b1_v[1];
+		b2.vx = b2_v[0]; b2.vy = b2_v[1];
+	}
+
 	
-	double[] give_components(Ball b, double[] coords){
-		/* x (coord 0, coord 1)
-		 * y (coord 1, -coord 0)
-		 * x' [-coord0 -coord1] [x1]
-		 * y' [-coord1 coord0] [y1]
-		 */
-
-		double[] vs = new double[2];
-		double vx = (b.vx * coords[0] + b.vy*coords[1]);
-		double vy = (b.vx *(coords[1]) + b.vy*-coords[0]);
-		vs[0] = vx;
-		vs[1] = vy;
-		return vs;
-	}
-
-	void collison(Ball b1, Ball b2){
-		/* u2 - u1 = -(v2 - v1)
-		 * 
-		 */
-		double[] coords = collision_vector(b1, b2);
-		double[] b1_new_v_vector = give_components(b1, coords);
-		double[] b2_new_v_vector = give_components(b2, coords);
-		
-		b1_new_v_vector[0] = -b1_new_v_vector[0];
-
-		b2_new_v_vector[0] = -b2_new_v_vector[0];
-
-		double det = 1/(coords[0]*-coords[0] - (coords[1]*coords[1]));
-
-		b1_new_v_vector[0] = det*(b1_new_v_vector[0]*-coords[0] + b1_new_v_vector[1]*-coords[1]);
-
-		b2_new_v_vector[0] = det*(b2_new_v_vector[0]*-coords[1] + b2_new_v_vector[1]*coords[0]);
-
-		b1_new_v_vector[1] = det*(b1_new_v_vector[0]*-coords[0] + b1_new_v_vector[1]*-coords[1]);
-
-		b2_new_v_vector[1] = det*(b2_new_v_vector[0]*-coords[1] + b2_new_v_vector[1]*coords[0]);
-		
-		b1.vx = b1_new_v_vector[0];
-		b1.vy = b1_new_v_vector[1];
-
-		b2.vx = b2_new_v_vector[0];
-		b2.vy = b2_new_v_vector[1];
-
-		/* [-coord0 -coord1]
-		 * [-coord1 coord0]
-		 */
-
-		/*double det = 1/(coords[0]*-coords[0] - (coords[1]*coords[1]));
-		double vx1 = b1.vx;
-		double vx2 = b2.vx;
-		b1.vx = det*(b1.vx*-coords[0] + b1.vy*-coords[1]);
-		b1.vy = det*(vx1*-coords[1] + b1.vy*coords[0]);
-		b2.vx = det*(b2.vx*-coords[0] + b2.vy*-coords[1]);
-		b2.vy = det*(vx2*-coords[1] + b2.vy*coords[0]);*/
-	}
-
 	double areaWidth, areaHeight;
 	
 	Ball [] balls;
@@ -88,28 +105,28 @@ class Model {
 		
 		// Initialize the model with a few balls
 		balls = new Ball[2];
-		balls[0] = new Ball(width / 3, height * 0.9, 1.2, 1.6, 0.2);
-		balls[1] = new Ball(2 * width / 3, height * 0.7, -0.6, 0.6, 0.3);
+		balls[0] = new Ball(width / 3, height * 0.7, 1.2, 2, 0.2);
+		balls[1] = new Ball(width / 3, height * 0.2, -0.6, 1.2, 0.2);
 	}
 
 	void step(double deltaT) {
 		// TODO this method implements one step of simulation with a step deltaT
+		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
+			handle_collision(balls[0], balls[1]);
+		}
 		for (Ball b : balls) {
 			// detect collision with the border
-			if (b.x < b.radius || b.x > areaWidth - b.radius) {
+			if (b.x <= b.radius || b.x >= areaWidth - b.radius) {
 				b.vx *= -1; // change direction of ball
 			}
-			if (b.y < b.radius || b.y > areaHeight - b.radius) {
+			if (b.y <= b.radius || b.y >= areaHeight - b.radius) {
 				b.vy *= -1;
 			}
 			
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
-			b.vy -= deltaT * 9.82;
-		}
-		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
-			collison(balls[0], balls[1]);
+			//b.vy -= deltaT * 9.82;
 		}
 	}
 	
@@ -124,11 +141,12 @@ class Model {
 			this.vx = vx;
 			this.vy = vy;
 			this.radius = r;
+			this.mass = 3;
 		}
 
 		/**
 		 * Position, speed, and radius of the ball. You may wish to add other attributes.
 		 */
-		double x, y, vx, vy, radius;
+		double x, y, vx, vy, radius, mass;
 	}
 }
