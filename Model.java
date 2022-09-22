@@ -18,12 +18,12 @@ class Model {
 		double angle = Math.PI/2;//initilized to pi/2 because if dy is zero, no case will match and we want to return pi/2
 		if(dy == 0){
 			angle = 0;
-		}else if((dx > 0 && dy >= 0) || (dx < 0 && dy < 0)){
-			angle = Math.atan(dy/dx); // In the third and first quadrant
-		}else if(dx < 0 && dy > 0){
-			angle = Math.PI + Math.atan(dy/dx);// In the second quadrant
+		}else if((dx > 0 && dy >= 0)){
+			angle = Math.atan(dy/dx); // In the first quadrant
+		}else if(dx < 0 && dy > 0 || (dx < 0 && dy < 0)){
+			angle = Math.PI + Math.atan(dy/dx);// In the third and the second quadrant
 		}else if(dx > 0 && dy < 0){
-			angle = Math.PI + Math.atan(dy/dx); //In the fourht quadrant
+			angle = 2*Math.PI + Math.atan(dy/dx); //In the fourth quadrant
 		}
 		return angle;
 	}
@@ -74,9 +74,10 @@ class Model {
 		double[][] inverse_matrix = find_inverse_matrix(transform_matrix);
 		double[] b1_v = {b1.vx, b1.vy};
 		double[] b2_v = {b2.vx, b2.vy};
-		System.out.println("momentum before: " + b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2))));
+		System.out.println("momentum before: " + (b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2)))));
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
+
 		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
 
 		b1_v_prim[0] = new_velocities[0];
@@ -85,7 +86,7 @@ class Model {
 		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
 		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
 
-		System.out.println("momentum after: " + b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2))));
+		System.out.println("momentum after: " + (b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2)))));
 
 		b1.vx = b1_v[0]; b1.vy = b1_v[1];
 		b2.vx = b2_v[0]; b2.vy = b2_v[1];
