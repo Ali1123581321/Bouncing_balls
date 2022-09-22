@@ -108,7 +108,6 @@ class Model {
 	}
 
 	void step(double deltaT) {
-		// TODO this method implements one step of simulation with a step deltaT
 		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
 			handle_collision(balls[0], balls[1]);
 		}
