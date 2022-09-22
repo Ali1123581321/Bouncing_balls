@@ -107,12 +107,23 @@ class Model {
 			}
 
 			// add gravity to our balls
-			b.vy -= deltaT * 9.82;
+			//b.vy -= deltaT * 9.82;
 
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
+
+			kineticEnergyOfSystemTest(balls);
 		}
+	}
+
+	private void kineticEnergyOfSystemTest(Ball... balls){
+		double totalKineticEnergy = 0;
+		for(Ball ball : balls) {
+			totalKineticEnergy += ball.mass*Math.pow(ball.vx, 2)/2 + ball.mass*Math.pow(ball.vy, 2)/2;
+		}
+
+		System.out.println("Kinetic energy: " + totalKineticEnergy);
 	}
 
 	private void collison2(Ball ball1, Ball ball2) {
