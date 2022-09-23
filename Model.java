@@ -12,6 +12,8 @@ package bouncing_balls;
  */
 class Model {
 
+	public final double GRAVITATION = 9.82;
+
 
 	double[] collision_vector(Ball b1, Ball b2){
 		double collision_vs[] = new double[2];
@@ -88,16 +90,18 @@ class Model {
 		
 		// Initialize the model with a few balls
 		balls = new Ball[2];
-		balls[0] = new Ball(width / 3, height * 0.9, 0.9, 3.6, 0.2, 1000);
-		balls[1] = new Ball(2 * width / 3, height * 0.7, -1.3, 1.6, 0.3, 10);
+		balls[0] = new Ball(width / 3, height * 0.7, 1, 4, 0.2, 3);
+		balls[1] = new Ball(width / 2, height * 0.2, 1.6, 0, 0.2, 4);
 	}
 
 	void step(double deltaT) {
 		// TODO this method implements one step of simulation with a step deltaT
-		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius + 0.002){
+		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
 			collison2(balls[0], balls[1]);
 		}
 		for (Ball b : balls) {
+			double vxBefore = b.vx;
+			double vyBefore = b.vy;
 			// detect collision with the border
 			if (b.x < b.radius || b.x > areaWidth - b.radius) {
 				b.vx *= -1; // change direction of ball
@@ -106,24 +110,34 @@ class Model {
 				b.vy *= -1;
 			}
 
-			// add gravity to our balls
-			//b.vy -= deltaT * 9.82;
+			// add gravity to our balls - important to not have it added when bouncing
+			if(!(vyBefore != b.vy))
+				b.vy -= deltaT * GRAVITATION;
 
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
 
-			kineticEnergyOfSystemTest(balls);
+			System.out.println("Total energy: " + kineticEnergyOfSystemTest(balls) + potentialEnergyOfSystemTest(balls));
 		}
 	}
 
-	private void kineticEnergyOfSystemTest(Ball... balls){
+	private double potentialEnergyOfSystemTest(Ball... balls) {
+		double totalPotentialEnergy = 0;
+		for(Ball ball : balls) {
+			totalPotentialEnergy += ball.mass*ball.y*GRAVITATION;
+		}
+
+		return totalPotentialEnergy;
+	}
+
+	private double kineticEnergyOfSystemTest(Ball... balls){
 		double totalKineticEnergy = 0;
 		for(Ball ball : balls) {
 			totalKineticEnergy += ball.mass*Math.pow(ball.vx, 2)/2 + ball.mass*Math.pow(ball.vy, 2)/2;
 		}
 
-		System.out.println("Kinetic energy: " + totalKineticEnergy);
+		return totalKineticEnergy;
 	}
 
 	private void collison2(Ball ball1, Ball ball2) {
