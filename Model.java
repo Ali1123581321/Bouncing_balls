@@ -18,10 +18,10 @@ class Model {
 		double angle = Math.PI/2;//initilized to pi/2 because if dy is zero, no case will match and we want to return pi/2
 		if(dy == 0){
 			angle = 0;
-		}else if((dx > 0 && dy >= 0)){
-			angle = Math.atan(dy/dx); // In the first quadrant
-		}else if(dx < 0 && dy > 0 || (dx < 0 && dy < 0)){
-			angle = Math.PI + Math.atan(dy/dx);// In the third and the second quadrant
+		}else if((dx > 0 && dy >= 0) || (dx < 0 && dy < 0)){
+			angle = Math.atan(dy/dx); // In third and the the first quadrant
+		}else if(dx < 0 && dy > 0){
+			angle = Math.PI + Math.atan(dy/dx);// In the second quadrant
 		}else if(dx > 0 && dy < 0){
 			angle = 2*Math.PI + Math.atan(dy/dx); //In the fourth quadrant
 		}
@@ -74,7 +74,6 @@ class Model {
 		double[][] inverse_matrix = find_inverse_matrix(transform_matrix);
 		double[] b1_v = {b1.vx, b1.vy};
 		double[] b2_v = {b2.vx, b2.vy};
-		System.out.println("momentum before: " + (b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2)))));
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
 
@@ -85,8 +84,6 @@ class Model {
 
 		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
 		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
-
-		System.out.println("momentum after: " + (b1.mass*(Math.sqrt(Math.pow(b1_v[0],2) + Math.pow(b1_v[1],2))) + b2.mass*(Math.sqrt(Math.pow(b2_v[0],2) + Math.pow(b2_v[1],2)))));
 
 		b1.vx = b1_v[0]; b1.vy = b1_v[1];
 		b2.vx = b2_v[0]; b2.vy = b2_v[1];
@@ -103,27 +100,40 @@ class Model {
 		
 		// Initialize the model with a few balls
 		balls = new Ball[2];
-		balls[0] = new Ball(width / 3, height * 0.7, 1.2, 2, 0.2);
-		balls[1] = new Ball(width / 3, height * 0.2, -0.6, 1.2, 0.2);
+		balls[0] = new Ball(width - 0.2, height - 0.5, 1, 1.6, 0.2,100);
+		balls[1] = new Ball(width - 0.6, height - 0.3, -3,2, 0.2,3);
 	}
-
+	boolean check = true;
 	void step(double deltaT) {
-		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
+		if(check && Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
 			handle_collision(balls[0], balls[1]);
+			check = false;
+			return;
 		}
 		for (Ball b : balls) {
 			// detect collision with the border
-			if (b.x <= b.radius || b.x >= areaWidth - b.radius) {
-				b.vx *= -1; // change direction of ball
+			if (b.x <= b.radius){
+				b.vx = Math.abs(b.vx);
+				check = true;
+			}else if(b.x >= areaWidth - b.radius){
+				b.vx = -Math.abs(b.vx);
+				check = true;
 			}
-			if (b.y <= b.radius || b.y >= areaHeight - b.radius) {
-				b.vy *= -1;
+			
+			if (b.y <= b.radius){
+				b.vy = Math.abs(b.vy);
+				b.vy -= deltaT * 9.82;
+				check = true;
+			}else if(b.y >= areaHeight - b.radius){
+				b.vy = -Math.abs(b.vy);
+				b.vy -= deltaT * 9.82;
+				check = true;
 			}
 			
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
-			//b.vy -= deltaT * 9.82;
+			b.vy -= deltaT * 9.82;
 		}
 	}
 	
@@ -132,13 +142,13 @@ class Model {
 	 */
 	class Ball {
 		
-		Ball(double x, double y, double vx, double vy, double r) {
+		Ball(double x, double y, double vx, double vy, double r, double mass) {
 			this.x = x;
 			this.y = y;
 			this.vx = vx;
 			this.vy = vy;
 			this.radius = r;
-			this.mass = 3;
+			this.mass = mass;
 		}
 
 		/**
