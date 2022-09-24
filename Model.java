@@ -16,14 +16,22 @@ class Model {
 		double dx = b1.x - b2.x;
 		double dy = b1.y - b2.y;
 		double angle = Math.PI/2;//initilized to pi/2 because if dy is zero, no case will match and we want to return pi/2
-		if(dy == 0){
+		if(dy == 0 && dx > 0){
 			angle = 0;
-		}else if((dx > 0 && dy >= 0) || (dx < 0 && dy < 0)){
-			angle = Math.atan(dy/dx); // In third and the the first quadrant
+		}else if(dy == 0 && dx < 0){
+			angle = Math.PI;
+		}else if((dx > 0 && dy > 0)){
+			angle = Math.atan(dy/dx);
+		}else if((dx < 0 && dy < 0)){
+			angle = Math.PI + Math.atan(dy/dx);
 		}else if(dx < 0 && dy > 0){
-			angle = Math.PI + Math.atan(dy/dx);// In the second quadrant
+			angle = Math.PI + Math.atan(dy/dx);
 		}else if(dx > 0 && dy < 0){
-			angle = 2*Math.PI + Math.atan(dy/dx); //In the fourth quadrant
+			angle = 2*Math.PI + Math.atan(dy/dx);
+		}else if(dx == 0 && dy > 0){
+			angle = angle;
+		}else if(dx == 0 && dy < 0){
+			angle = angle + Math.PI;
 		}
 		return angle;
 	}
@@ -68,6 +76,14 @@ class Model {
 		return v1_v2;
 	}
 
+	boolean check_if_moving_apart(double v1, double v2){
+		boolean check = (v1 >= 0) && (v2 <= 0); 
+		//because we are flipping the coordinates with angle theta so they are aligned with
+		//the collison vector, the ball b1 is always in the first quadrant, and therefore, if it
+		//has a positive speed, and b2 has negative speed, then they are moving apart, and are not colliding
+		return check;
+	}
+
 	void handle_collision(Ball b1, Ball b2){
 		double theta = get_angle(b1, b2);
 		double[][] transform_matrix = find_transform_matrix(theta);
@@ -76,6 +92,9 @@ class Model {
 		double[] b2_v = {b2.vx, b2.vy};
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
+
+		if(check_if_moving_apart(b1_v_prim[0], b2_v_prim[0]))
+			return;
 
 		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
 
@@ -100,8 +119,8 @@ class Model {
 		
 		// Initialize the model with a few balls
 		balls = new Ball[2];
-		balls[0] = new Ball(width - 0.2, height - 0.5, 1, 1.6, 0.2,100);
-		balls[1] = new Ball(width - 0.6, height - 0.3, -3,2, 0.2,3);
+        balls[0] = new Ball(width - 0.6, 0.2, 1, 0, 0.2,3);
+        balls[1] = new Ball(width - 0.2, 0.2, -3,0, 0.2,3);
 	}
 	boolean check = true;
 	void step(double deltaT) {
