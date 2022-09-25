@@ -11,31 +11,32 @@ package bouncing_balls;
  *
  */
 class Model {
-
+	//returns the angle theta which the balls are colliding with. We use b2 as the reference, so b1 rotates around b2, and b2 acts like the
+	//origo. We take to count all the possible cases that b1 can exist in. 
 	double get_angle(Ball b1, Ball b2){
 		double dx = b1.x - b2.x;
 		double dy = b1.y - b2.y;
-		double angle = Math.PI/2;//initilized to pi/2 because if dy is zero, no case will match and we want to return pi/2
+		double angle = 0;
 		if(dy == 0 && dx > 0){
-			angle = 0;
+			angle = 0;//no rotation because b1 is on the right side of the x axis already
 		}else if(dy == 0 && dx < 0){
-			angle = Math.PI;
+			angle = Math.PI;//half circle rotation because b1 is on the negative left side of the x axis
 		}else if((dx > 0 && dy > 0)){
-			angle = Math.atan(dy/dx);
+			angle = Math.atan(dy/dx);//b1 is in the first quadrant
 		}else if((dx < 0 && dy < 0)){
-			angle = Math.PI + Math.atan(dy/dx);
+			angle = Math.PI + Math.atan(dy/dx);//b1 is in the third quadrant
 		}else if(dx < 0 && dy > 0){
-			angle = Math.PI + Math.atan(dy/dx);
+			angle = Math.PI + Math.atan(dy/dx);//b1 is in the second quadrant
 		}else if(dx > 0 && dy < 0){
-			angle = 2*Math.PI + Math.atan(dy/dx);
+			angle = 2*Math.PI + Math.atan(dy/dx);//b1 is in the fourth quadrant
 		}else if(dx == 0 && dy > 0){
-			angle = angle;
+			angle = Math.PI/2;//b1 is on the positive y axis
 		}else if(dx == 0 && dy < 0){
-			angle = angle + Math.PI;
+			angle = 1.5*Math.PI;//b1 is on the negative y axis
 		}
 		return angle;
 	}
-
+	//computes the matrix for the transformation from the rotated coordinate system to the old one. 
 	double[][] find_transform_matrix(double theta){
 		double[][] transform_matrix = new double[2][2];
 		double cos_theta = Math.cos(theta);
@@ -44,7 +45,7 @@ class Model {
 		transform_matrix[1][0] = sin_theta; transform_matrix[1][1] = cos_theta;
 		return transform_matrix;
 	}
-
+	//Computes the matrix for the transformation from the old coordinate system to the rotated one
 	double[][] find_inverse_matrix(double[][] transform_matrix){
 		double[][] inverse_matrix = new double[2][2];
 		double det = 1/((transform_matrix[0][0]*transform_matrix[1][1]) - (transform_matrix[0][1]*transform_matrix[1][0]));
@@ -52,21 +53,21 @@ class Model {
 		inverse_matrix[1][0] = -det*transform_matrix[1][0]; inverse_matrix[1][1] = det*transform_matrix[0][0];
 		return inverse_matrix;
 	}
-
+	//computes the vectors in the rotated coordinate system
 	double[] transform_to_new_coordinates(double[] v, double[][] inverse_matrix){
 		double[] new_v = new double[2];
 		new_v[0] = v[0]*inverse_matrix[0][0] + v[1]*inverse_matrix[0][1];
 		new_v[1] = v[0]*inverse_matrix[1][0] + v[1]*inverse_matrix[1][1];
 		return new_v;
 	}
-
+	//translates the new computed vectors to the old coordinate system
 	double[] return_to_old_coordinates(double[] v, double[][] transform_matrix){
 		double[] new_v = new double[2];
 		new_v[0] = v[0]*transform_matrix[0][0] + v[1]*transform_matrix[0][1];
 		new_v[1] = v[0]*transform_matrix[1][0] + v[1]*transform_matrix[1][1];
 		return new_v;
 	}
-
+	//the function that calculate the velocity using the formulas
 	double[] calculate_velocity(double mass_b1, double mass_b2, double v1, double v2){
 		double total_momentum = mass_b1*v1 + mass_b2*v2;
 		double relative_velocity = v2 - v1;
@@ -75,7 +76,7 @@ class Model {
 		double[] v1_v2 = {velocity_after_collision_b1, velocity_after_collision_b2};
 		return v1_v2;
 	}
-
+	//to check if the balls are moving apart when they are touching each others so we don't calculate any collisions
 	boolean check_if_moving_apart(double v1, double v2){
 		boolean check = (v1 >= 0) && (v2 <= 0);
 		//because we are flipping the coordinates with angle theta so they are aligned with
@@ -83,7 +84,8 @@ class Model {
 		//has a positive speed, and b2 has negative speed, then they are moving apart, and are not colliding
 		return check;
 	}
-
+	//check if the balls are moving in the same directions, but the one in front is faster than the one behind, this will happen if the 
+	//balls start touching each others from the beginning.
 	boolean check_if_moving_in_the_same_direction_but_not_colliding(double v1, double v2){
 		/*
 		 * because we have the coordinates flipped to fit with b1, we can say that if both v1 and v2 are less than zero,
@@ -104,8 +106,8 @@ class Model {
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
 
-		if(check_if_moving_apart(b1_v_prim[0], b2_v_prim[0]) ||
-		check_if_moving_in_the_same_direction_but_not_colliding(b1_v_prim[0], b2_v_prim[0]))
+		if(check_if_moving_apart(b1_v_prim[0], b2_v_prim[0])
+		||check_if_moving_in_the_same_direction_but_not_colliding(b1_v_prim[0], b2_v_prim[0]))
 			return;
 
 		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
