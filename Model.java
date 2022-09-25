@@ -77,10 +77,21 @@ class Model {
 	}
 
 	boolean check_if_moving_apart(double v1, double v2){
-		boolean check = (v1 >= 0) && (v2 <= 0); 
+		boolean check = (v1 >= 0) && (v2 <= 0);
 		//because we are flipping the coordinates with angle theta so they are aligned with
 		//the collison vector, the ball b1 is always in the first quadrant, and therefore, if it
 		//has a positive speed, and b2 has negative speed, then they are moving apart, and are not colliding
+		return check;
+	}
+
+	boolean check_if_moving_in_the_same_direction_but_not_colliding(double v1, double v2){
+		/*
+		 * because we have the coordinates flipped to fit with b1, we can say that if both v1 and v2 are less than zero,
+		 * then they are moving on the same direction which is negative, and if v1 is greater than v2, then v2 is moving
+		 * faster on the negative direction, therefore they are not colliding. If they both are positive, then they are
+		 * moving on the positive direction, and if v1 is greater, then b1 is moving faster, and they are not colliding
+		 */
+		boolean check = (v1 > 0 && v2 > 0 && v2 < v1) || (v1 < 0 && v2 < 0 && v2 < v1);	
 		return check;
 	}
 
@@ -93,7 +104,8 @@ class Model {
 		double[] b1_v_prim = transform_to_new_coordinates(b1_v, inverse_matrix);
 		double[] b2_v_prim = transform_to_new_coordinates(b2_v, inverse_matrix);
 
-		if(check_if_moving_apart(b1_v_prim[0], b2_v_prim[0]))
+		if(check_if_moving_apart(b1_v_prim[0], b2_v_prim[0]) ||
+		check_if_moving_in_the_same_direction_but_not_colliding(b1_v_prim[0], b2_v_prim[0]))
 			return;
 
 		double[] new_velocities = calculate_velocity(b1.mass, b2.mass, b1_v_prim[0], b2_v_prim[0]);
@@ -103,9 +115,12 @@ class Model {
 
 		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
 		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
-
+		System.out.println("momentum on x before: " + (b1.vx*b1.mass + b2.vx*b2.mass));
+		System.out.println("momentum on y before: " + (b1.vy*b1.mass + b2.vy*b2.mass));
 		b1.vx = b1_v[0]; b1.vy = b1_v[1];
 		b2.vx = b2_v[0]; b2.vy = b2_v[1];
+		System.out.println("momentum on x after: " + (b1.vx*b1.mass + b2.vx*b2.mass));
+		System.out.println("momentum on y after: " + (b1.vy*b1.mass + b2.vy*b2.mass));
 	}
 
 	
@@ -119,34 +134,60 @@ class Model {
 		
 		// Initialize the model with a few balls
 		balls = new Ball[2];
-        balls[0] = new Ball(width - 0.6, 0.2, 1, 0, 0.2,3);
-        balls[1] = new Ball(width - 0.2, 0.2, -3,0, 0.2,3);
+		//some testcases, those between the stars used to fail miserably in the beginning when we first started
+        //*
+		//special case when both are on the ground, with opposite directions
+		//balls[0] = new Ball(width - 0.2, 0.2, 3,0, 0.2,3);
+        //balls[1] = new Ball(width - 0.6, 0.2, -1,0, 0.2,3);
+        //balls[0] = new Ball(width - 0.2, 0.2, 1, 0, 0.2,3);
+        //balls[1] = new Ball(width - 0.6, 0.2, -3,0, 0.2,3);
+		//a test case where they used to get stuck after the sixth or fifth collison
+		//balls[0] = new Ball(width/3, height*0.7, 1, 4, 0.2,3);
+        //balls[1] = new Ball(width/2, height*0.2, 1.6,0, 0.2,4);
+		//*
+		
+		//test case with very different masses
+		//balls[0] = new Ball(width/2, height*0.7, 0, 4, 0.2,100);
+        //balls[1] = new Ball(width/2, height*0.2, 0,0, 0.2,4);
+		
+		
+		//test case when the x coordinates are the same
+		//balls[0] = new Ball(width/3, height*0.7, 1, 4, 0.2,100);
+        //balls[1] = new Ball(width/2, height*0.2, 1.6,0, 0.2,4);
+
+		//test case for the diagonal when balls are colliding
+		//balls[0] = new Ball(width - 1, height/2, -4, 4, 0.2,4);
+        //balls[1] = new Ball(width - 1.2, height/2 + 0.3, 4,-4, 0.2,4);
+		
+		
+		//test case for the diagonal when balls are moving apart, the balls will get stuck togethen in this case if 
+		//the chcek in the function handle collision is taken away.
+		//balls[0] = new Ball(width - 1, height/2, 4, -4, 0.2,4);
+        //balls[1] = new Ball(width - 1.2, height/2 + 0.3, -4,4, 0.2,4);
+
+		//an arbitrary input
+		balls[0] = new Ball(0.9, height/2,5, 3, 0.2,4);
+        balls[1] = new Ball(2, height/3, 6,-4, 0.4,4);
 	}
-	boolean check = true;
+
 	void step(double deltaT) {
-		if(check && Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
+		if(Math.sqrt(Math.pow((balls[0].x - balls[1].x), 2) + Math.pow((balls[0].y) - (balls[1].y), 2)) <= balls[0].radius + balls[1].radius){
 			handle_collision(balls[0], balls[1]);
-			check = false;
-			return;
 		}
 		for (Ball b : balls) {
 			// detect collision with the border
 			if (b.x <= b.radius){
 				b.vx = Math.abs(b.vx);
-				check = true;
 			}else if(b.x >= areaWidth - b.radius){
 				b.vx = -Math.abs(b.vx);
-				check = true;
 			}
 			
 			if (b.y <= b.radius){
 				b.vy = Math.abs(b.vy);
 				b.vy -= deltaT * 9.82;
-				check = true;
 			}else if(b.y >= areaHeight - b.radius){
 				b.vy = -Math.abs(b.vy);
 				b.vy -= deltaT * 9.82;
-				check = true;
 			}
 			
 			// compute new position according to the speed of the ball
