@@ -93,7 +93,7 @@ class Model {
 		 * faster on the negative direction, therefore they are not colliding. If they both are positive, then they are
 		 * moving on the positive direction, and if v1 is greater, then b1 is moving faster, and they are not colliding
 		 */
-		boolean check = (v1 > 0 && v2 > 0 && v2 < v1) || (v1 < 0 && v2 < 0 && v2 < v1);	
+		boolean check = (v1 > 0 && v2 > 0 && v2 <= v1) || (v1 < 0 && v2 < 0 && v2 <= v1);	
 		return check;
 	}
 
@@ -188,8 +188,8 @@ class Model {
         //balls[1] = new Ball(width - 1.2, height/2 + 0.3, -4,4, 0.2,4);
 
 		//an arbitrary input
-		balls[0] = new Ball(0.9, height/2,5, 3, 0.2,4);
-        balls[1] = new Ball(2, height/3, 6,-4, 0.4,4);
+		balls[0] = new Ball(0.9, 2,3, 4, 0.2,3);
+        balls[1] = new Ball(1.2, 0.6, 0,4, 0.4,10);
 	}
 
 	void step(double deltaT) {
@@ -217,7 +217,8 @@ class Model {
 			b.y += deltaT * b.vy;
 			b.vy -= deltaT * 9.82;
 		}
-		System.out.println("total energy: " + (potentialEnergyOfSystemTest(balls) + kineticEnergyOfSystemTest(balls)));
+		//uncomment to check if the energy is reserved
+		//System.out.println("total energy: " + (potentialEnergyOfSystemTest(balls) + kineticEnergyOfSystemTest(balls)));
 	}
 	
 	/**
