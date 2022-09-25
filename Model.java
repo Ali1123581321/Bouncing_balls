@@ -117,15 +117,35 @@ class Model {
 
 		b1_v = return_to_old_coordinates(b1_v_prim, transform_matrix);
 		b2_v = return_to_old_coordinates(b2_v_prim, transform_matrix);
-		System.out.println("momentum on x before: " + (b1.vx*b1.mass + b2.vx*b2.mass));
-		System.out.println("momentum on y before: " + (b1.vy*b1.mass + b2.vy*b2.mass));
+		//System.out.println("momentum on x before: " + (b1.vx*b1.mass + b2.vx*b2.mass));
+		//System.out.println("momentum on y before: " + (b1.vy*b1.mass + b2.vy*b2.mass));
 		b1.vx = b1_v[0]; b1.vy = b1_v[1];
 		b2.vx = b2_v[0]; b2.vy = b2_v[1];
-		System.out.println("momentum on x after: " + (b1.vx*b1.mass + b2.vx*b2.mass));
-		System.out.println("momentum on y after: " + (b1.vy*b1.mass + b2.vy*b2.mass));
+		//System.out.println("momentum on x after: " + (b1.vx*b1.mass + b2.vx*b2.mass));
+		//System.out.println("momentum on y after: " + (b1.vy*b1.mass + b2.vy*b2.mass));
 	}
 
-	
+	//two functions to compute the total energy of the system so we make sure that it does conserve energy
+	//note: The system does not lose energy as time goes to infinty, but locally  in time the energy occillates
+	private double potentialEnergyOfSystemTest(Ball... balls) {
+        double totalPotentialEnergy = 0;
+        for (Ball ball : balls) {
+            totalPotentialEnergy += ball.mass * ball.y * 9.82;
+        }
+
+        return totalPotentialEnergy;
+    }
+
+	private double kineticEnergyOfSystemTest(Ball... balls) {
+        double totalKineticEnergy = 0;
+        for (Ball ball : balls) {
+            totalKineticEnergy += ball.mass * Math.pow(ball.vx, 2) / 2 + ball.mass * Math.pow(ball.vy, 2) / 2;
+        }
+
+        return totalKineticEnergy;
+    }
+
+
 	double areaWidth, areaHeight;
 	
 	Ball [] balls;
@@ -197,6 +217,7 @@ class Model {
 			b.y += deltaT * b.vy;
 			b.vy -= deltaT * 9.82;
 		}
+		System.out.println("total energy: " + (potentialEnergyOfSystemTest(balls) + kineticEnergyOfSystemTest(balls)));
 	}
 	
 	/**
